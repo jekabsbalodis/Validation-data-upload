@@ -33,11 +33,11 @@ def main(
 
     con = mdConnection()
 
-    # addMarsruts(con, validation_files)
-    # addParks(con, validation_files)
-    # addTranspVeids(con, validation_files)
-    # addTransports(con, validation_files)
-    # addTransportsMarsruts(con, validation_files)
+    addMarsruts(con, validation_files)
+    addParks(con, validation_files)
+    addTranspVeids(con, validation_files)
+    addTransports(con, validation_files)
+    addTransportsMarsruts(con, validation_files)
     addValidacijas(con, validation_files)
 
 
