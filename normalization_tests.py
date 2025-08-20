@@ -1,6 +1,13 @@
-import duckdb
+import os
 
-con = duckdb.connect('db.duckdb')
+import duckdb
+from dotenv import load_dotenv
+
+load_dotenv()
+MD_TOKEN: str = os.getenv('MD_TOKEN', 'NO TOKEN FOUND')
+
+con = duckdb.connect(f'md:validacijas?motherduck_token={MD_TOKEN}')
+# con = duckdb.connect('db.duckdb')
 con.sql("""--sql
     SELECT count(*) FROM metabase.Marsruts_lookup;
     """).show()

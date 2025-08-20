@@ -3,16 +3,22 @@
 # dependencies = [
 #     "duckdb==1.3.2",
 #     "pandas",
+#     "python-dotenv",
 #     "typer",
 # ]
 # ///
 
+import os
 from pathlib import Path
 
 import duckdb
 import typer
+from dotenv import load_dotenv
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing_extensions import Annotated
+
+load_dotenv()
+MD_TOKEN: str = os.getenv('MD_TOKEN', 'NO TOKEN FOUND')
 
 read_csv_columns: str = """
     columns = {
@@ -91,8 +97,8 @@ def main(
 
 
 def mdConnection() -> duckdb.DuckDBPyConnection:
-    # con = duckdb.connect(f'md:validacijas?motherduck_token={MD_TOKEN}')
-    con = duckdb.connect('db.duckdb')
+    con = duckdb.connect(f'md:validacijas?motherduck_token={MD_TOKEN}')
+    # con = duckdb.connect('db.duckdb')
     con.sql("""--sql
         CREATE SCHEMA IF NOT EXISTS metabase;
 
