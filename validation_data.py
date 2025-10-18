@@ -53,33 +53,33 @@ def main(
 def md_connection(local: bool, token: str) -> duckdb.DuckDBPyConnection:
     if local:
         con = duckdb.connect('local.duckdb')
-        con.execute("""--sql
-                    CREATE TABLE if not exists local.validacijas_new (
-                      Ier_ID UINTEGER,
-                      Parks VARCHAR,
-                      TranspVeids VARCHAR,
-                      GarNr UINTEGER,
-                      MarsrNos VARCHAR,
-                      TMarsruts VARCHAR,
-                      Virziens VARCHAR,
-                      ValidTalonaId UINTEGER,
-                      Laiks TIMESTAMP,
-                      UNIQUE (
-                        Laiks,
-                        ValidTalonaId,
-                        Virziens,
-                        TMarsruts,
-                        MarsrNos,
-                        GarNr,
-                        TranspVeids,
-                        Parks,
-                        Ier_ID
-                      )
-                    );
-                    """)
-        return con
     else:
-        return duckdb.connect(f'md:validacijas?motherduck_token={token}')
+        con = duckdb.connect(f'md:validacijas?motherduck_token={token}')
+    con.execute("""--sql
+                CREATE TABLE if not exists validacijas (
+                  Ier_ID UINTEGER,
+                  Parks VARCHAR,
+                  TranspVeids VARCHAR,
+                  GarNr UINTEGER,
+                  MarsrNos VARCHAR,
+                  TMarsruts VARCHAR,
+                  Virziens VARCHAR,
+                  ValidTalonaId UINTEGER,
+                  Laiks TIMESTAMP,
+                  UNIQUE (
+                    Laiks,
+                    ValidTalonaId,
+                    Virziens,
+                    TMarsruts,
+                    MarsrNos,
+                    GarNr,
+                    TranspVeids,
+                    Parks,
+                    Ier_ID
+                  )
+                );
+                """)
+    return con
 
 
 def read_csv_files(
@@ -91,7 +91,7 @@ def read_csv_files(
     for file in track(file_list, description='Raksta failus DuckDB...'):
         con.execute(
             f"""--sql
-                insert or ignore into validacijas_new
+                insert or ignore into validacijas
                 select * from read_csv(?,{read_csv_columns});
             """,
             [str(file.as_posix())],
