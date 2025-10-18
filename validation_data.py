@@ -31,18 +31,55 @@ def main(
             help='Path to the files containing validation data', show_default=False
         ),
     ],
+    local: Annotated[
+        bool,
+        typer.Option(
+            '--local/--remote',
+            '-l/-r',
+            help='By default, uses a local DuckDB database "local.duckdb"',
+            show_default='local',
+        ),
+    ] = True,
 ) -> None:
     if validation_files.is_file() or not validation_files.exists():
         print('Please provide a path to a folder')
         raise typer.Exit()
 
-    con = md_connection(MD_TOKEN)
+    con = md_connection(token=MD_TOKEN, local=local)
 
     read_csv_files(con, validation_files)
 
 
-def md_connection(token: str) -> duckdb.DuckDBPyConnection:
-    return duckdb.connect(f'md:validacijas?motherduck_token={token}')
+def md_connection(local: bool, token: str) -> duckdb.DuckDBPyConnection:
+    if local:
+        con = duckdb.connect('local.duckdb')
+        con.execute("""--sql
+                    CREATE TABLE if not exists local.validacijas_new (
+                      Ier_ID UINTEGER,
+                      Parks VARCHAR,
+                      TranspVeids VARCHAR,
+                      GarNr UINTEGER,
+                      MarsrNos VARCHAR,
+                      TMarsruts VARCHAR,
+                      Virziens VARCHAR,
+                      ValidTalonaId UINTEGER,
+                      Laiks TIMESTAMP,
+                      UNIQUE (
+                        Laiks,
+                        ValidTalonaId,
+                        Virziens,
+                        TMarsruts,
+                        MarsrNos,
+                        GarNr,
+                        TranspVeids,
+                        Parks,
+                        Ier_ID
+                      )
+                    );
+                    """)
+        return con
+    else:
+        return duckdb.connect(f'md:validacijas?motherduck_token={token}')
 
 
 def read_csv_files(
