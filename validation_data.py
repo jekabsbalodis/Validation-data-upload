@@ -56,7 +56,7 @@ def md_connection(local: bool, token: str) -> duckdb.DuckDBPyConnection:
     else:
         con = duckdb.connect(f'md:validacijas?motherduck_token={token}')
     con.execute("""--sql
-                CREATE TABLE if not exists validacijas (
+                create table if not exists validacijas (
                   Ier_ID UINTEGER,
                   Parks VARCHAR,
                   TranspVeids VARCHAR,
@@ -66,7 +66,7 @@ def md_connection(local: bool, token: str) -> duckdb.DuckDBPyConnection:
                   Virziens VARCHAR,
                   ValidTalonaId UINTEGER,
                   Laiks TIMESTAMP,
-                  UNIQUE (
+                  primary key (
                     Laiks,
                     ValidTalonaId,
                     Virziens,
