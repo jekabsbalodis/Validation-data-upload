@@ -68,13 +68,6 @@ def md_connection(local: bool, token: str) -> duckdb.DuckDBPyConnection:
                   Laiks TIMESTAMP,
                   primary key (
                     Laiks,
-                    ValidTalonaId,
-                    Virziens,
-                    TMarsruts,
-                    MarsrNos,
-                    GarNr,
-                    TranspVeids,
-                    Parks,
                     Ier_ID
                   )
                 );
