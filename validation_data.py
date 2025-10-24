@@ -82,13 +82,37 @@ def read_csv_files(
     file_list = list(files.glob('*.csv')) + list(files.glob('*.txt'))
 
     for file in track(file_list, description='Raksta failus DuckDB...'):
-        con.execute(
-            f"""--sql
-                insert or ignore into validacijas
-                select * from read_csv(?,{read_csv_columns});
-            """,
-            [str(file.as_posix())],
-        )
+        try:
+            con.execute(
+                f"""--sql
+                    insert or ignore into validacijas
+                    select * from read_csv(?,{read_csv_columns});
+                """,
+                [str(file.as_posix())],
+            )
+        except duckdb.InvalidInputException:
+            import codecs  # noqa: PLC0415
+
+            with codecs.open(
+                str(file.as_posix()),
+                mode='r',
+                encoding='windows-1257',
+            ) as source:
+                with codecs.open(
+                    'target.txt',
+                    mode='w',
+                    encoding='utf-8',
+                ) as target:
+                    contents = source.read()
+                    target.write(contents)
+
+            con.execute(
+                f"""--sql
+                    insert or ignore into validacijas
+                    select * from read_csv(?,{read_csv_columns});
+                """,
+                ['target.txt'],
+            )
 
 
 if __name__ == '__main__':
