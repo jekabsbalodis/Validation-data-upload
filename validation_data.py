@@ -86,7 +86,7 @@ def read_csv_files(
             con.execute(
                 f"""--sql
                     insert or ignore into validacijas
-                    select * from read_csv(?,{read_csv_columns});
+                    select * from read_csv(?,{read_csv_columns},escape='"');
                 """,
                 [str(file.as_posix())],
             )
@@ -109,7 +109,7 @@ def read_csv_files(
             con.execute(
                 f"""--sql
                     insert or ignore into validacijas
-                    select * from read_csv(?,{read_csv_columns});
+                    select * from read_csv(?,{read_csv_columns},escape='"');
                 """,
                 ['target.txt'],
             )
