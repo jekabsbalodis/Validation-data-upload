@@ -1,0 +1,3 @@
+pull:
+  - prefect.deployments.steps.git_clone:
+      repository: https://github.com/jekabsbalodis/Validation-data-upload.git
