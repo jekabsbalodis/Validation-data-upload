@@ -239,7 +239,6 @@ async def update_db(*, data_url: HttpUrl) -> None:
     logger.info('Writing data to Motherduck')
 
     motherduck_token = await get_md_token()
-    print(motherduck_token)
     md_con = connect_duckdb(token=motherduck_token, in_memory=False)
     write_data(con=md_con, data_dir=validated_dir)
     close_connection(con=md_con)
