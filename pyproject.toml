@@ -10,6 +10,9 @@ dependencies = [
 [dependency-groups]
 dev = [
   "basedpyright>=1.31.6",
+  "pytest>=9.0.0",
+  "pytest-asyncio>=0.23.3",
+  "pytest-cov>=7.0.0",
   "ruff>=0.13.2",
   "sqlfluff>=3.4.2",
   "tombi>=0.6.17",

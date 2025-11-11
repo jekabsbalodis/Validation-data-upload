@@ -4,3 +4,5 @@ validacijudati*/
 *.parquet
 *.zip
 .aider*
+__pycache__/
+.coverage
