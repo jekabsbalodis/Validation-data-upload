@@ -124,7 +124,7 @@ def convert_data(*, extracted_path: TemporaryDirectory) -> TemporaryDirectory:
     file_list = list(files_path.glob('*.csv')) + list(files_path.glob('*.txt'))
 
     converted_dir = TemporaryDirectory()
-    converted_path = converted_dir.name
+    converted_path = Path(converted_dir.name)
 
     for file in file_list:
         converted_file = converted_path / file.name
@@ -146,7 +146,7 @@ def convert_data(*, extracted_path: TemporaryDirectory) -> TemporaryDirectory:
 
 
 @task
-def test_data(
+def check_data_encoding(
     *,
     extracted_path: TemporaryDirectory,
 ) -> None | TemporaryDirectory:
@@ -228,7 +228,7 @@ async def update_db(*, data_url: HttpUrl) -> None:
 
     logger.info("Validating data files' encoding")
 
-    validated_dir = test_data(extracted_path=extract_dir)
+    validated_dir = check_data_encoding(extracted_path=extract_dir)
 
     logger.info('Testing writing data to in-memory database')
 
