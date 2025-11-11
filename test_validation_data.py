@@ -36,14 +36,13 @@ def prefect_test_fixture():
 @pytest.fixture
 def sample_csv():
     """Sample csv for testing"""
-    return """
-Ier_ID,Parks,TranspVeids,GarNr,MarsrNos,TMarsruts,Virziens,ValidTalonaId,Laiks
+    return """Ier_ID,Parks,TranspVeids,GarNr,MarsrNos,TMarsruts,Virziens,ValidTalonaId,Laiks
 175426,2 parks,Trolejbuss,29299,Centrāltirgus - Mežciems,Tr35,Forth,3645190,01.09.2025 00:02:20
 192554,2 parks,Trolejbuss,29320,Centrāltirgus - Berģuciems,Tr31,Forth,3626095,01.09.2025 00:08:33
 203671,7 parks,Autobuss,71084,Abrenes iela -Mežaparks,A9,Forth,3433289,01.09.2025 00:55:03
 203744,7 parks,Autobuss,71084,Abrenes iela -Mežaparks,A9,Forth,3623389,01.09.2025 03:38:02
 204166,7 parks,Autobuss,71084,Abrenes iela -Mežaparks,A9,Forth,3623009,01.09.2025 01:27:06
-    """
+"""  # noqa: E501
 
 
 @pytest.fixture
@@ -300,3 +299,62 @@ class TestConvertData:
 
         extract_dir.cleanup()
         converted_dir.cleanup()
+
+
+class TestCheckDataEncoding:
+    """Test for check_data_encoding task"""
+
+    def test_check_data_encoding_utf8_encoding(self, temp_zip_file):
+        """Test check_data_encoding with utf-8 encoded files"""
+        _, temp_zip_path = temp_zip_file
+        extract_path = extract_downloaded_data(zip_path=temp_zip_path)
+        result = check_data_encoding(extracted_path=extract_path)
+        assert result == extract_path
+
+    def test_check_data_encoding_windows1257_encoding(
+        self, temp_zip_file_windows_encoding
+    ):
+        _, temp_zip_path = temp_zip_file_windows_encoding
+        extract_path = extract_downloaded_data(zip_path=temp_zip_path)
+        result = check_data_encoding(extracted_path=extract_path)
+
+        assert result != extract_path
+        assert isinstance(result, TemporaryDirectory)
+        assert os.path.exists(result.name)
+
+        result.cleanup()
+
+
+class TestWriteData:
+    """Tests for write_data task"""
+
+    def test_write_data_success(self, temp_zip_file):
+        """Test write_data with a valid zip"""
+        _, zip_path = temp_zip_file
+        extracted_dir = extract_downloaded_data(zip_path=zip_path)
+        validated_dir = check_data_encoding(extracted_path=extracted_dir)
+        con = connect_duckdb()
+
+        write_data(con=con, data_dir=validated_dir)
+
+        result = con.execute("""--sql
+            select count(*) from validacijas
+            """).fetchone()[0]
+        assert result == 5
+        con.close()
+
+    def test_write_duplicate_data(self, temp_zip_file):
+        """Test write_data with duplicate data"""
+        _, zip_path = temp_zip_file
+        extracted_dir = extract_downloaded_data(zip_path=zip_path)
+        validated_dir = check_data_encoding(extracted_path=extracted_dir)
+        con = connect_duckdb()
+
+        write_data(con=con, data_dir=validated_dir)
+        write_data(con=con, data_dir=validated_dir)
+
+        result = con.execute("""--sql
+            select count(*) from validacijas
+            """).fetchone()[0]
+        assert result == 5
+        con.close()
