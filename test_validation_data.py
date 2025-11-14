@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import duckdb
 import pytest
 import requests
-from prefect import flow
 from prefect.testing.utilities import prefect_test_harness
 
 from validation_data import (
@@ -358,3 +357,75 @@ class TestWriteData:
             """).fetchone()[0]
         assert result == 5
         con.close()
+
+
+class TestCloseConnection:
+    """Tests for close_connection task"""
+
+    def test_close_connection_success(self):
+        """Test close_connection closes the duckdb connection"""
+        mock_con = MagicMock(spec=duckdb.DuckDBPyConnection)
+        close_connection(con=mock_con)
+        mock_con.close.assert_called_once()
+
+
+class TestCleanupTempDirectories:
+    """Tests for cleanup_temp_directories task"""
+
+    def test_cleanup_temp_directories(self):
+        dirs = [TemporaryDirectory() for _ in range(3)]
+        dir_names = [d.name for d in dirs]
+
+        cleanup_temp_directories(dirs=dirs)
+
+        for dir_name in dir_names:
+            assert not os.path.exists(dir_name)
+
+
+class TestUpdateDbFlow:
+    """Tests for the main flow"""
+
+    @pytest.mark.asyncio
+    async def test_update_db_flow_success(self, temp_zip_file):
+        """Test successful execution of the flow"""
+        _, zip_path = temp_zip_file
+
+        mock_response = Mock()
+        mock_response.iter_content = Mock(return_value=[zip_path.read_bytes()])
+        mock_response.raise_for_status = Mock()
+
+        mock_secret = MagicMock()
+        mock_secret.get.return_value = 'test_token_123'
+
+        # Create an AsyncMock that returns the mock_secret
+        async_mock_load = AsyncMock(return_value=mock_secret)
+
+        with (
+            patch('validation_data.requests.get', return_value=mock_response),
+            patch(
+                'validation_data.Secret.load', async_mock_load
+            ),  # Pass the AsyncMock directly
+            patch('validation_data.connect_duckdb') as mock_connect,
+        ):
+            mock_con = MagicMock()
+            mock_connect.return_value = mock_con
+
+            await update_db(data_url='https://example.com/data.zip')
+
+            # Verify flow executed
+            assert mock_connect.called
+            async_mock_load.assert_awaited_once_with('md-token')
+
+    @pytest.mark.asyncio
+    async def test_update_db_flow_download_failure(self):
+        """Test flow with download failure"""
+        mock_response = Mock()
+        mock_response.raise_for_status.side_effect = requests.HTTPError('404')
+
+        with patch('validation_data.requests.get', return_value=mock_response):
+            with pytest.raises(requests.HTTPError):
+                await update_db(data_url='https://example.com/data.zip')
+
+
+if __name__ == '__main__':
+    pytest.main([__file__, '-v'])
